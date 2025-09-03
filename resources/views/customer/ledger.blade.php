@@ -1,0 +1,365 @@
+@extends('layouts.master')
+@section('styles')
+<link rel="stylesheet" href="{{ asset('assets/css/persianDatepicker-default.css') }}">
+@endsection
+
+
+
+@section('content')
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center d-print-none">
+        <h5 class="mb-0">صورت حساب مشتری</h5>
+        <div>
+            <button type="button" class="btn btn-secondary me-2" onclick="window.print()">پرینت</button>
+            <button type="button" class="btn btn-primary" onclick="openPersianDatePicker()" data-bs-toggle="modal" data-bs-target="#exampleModal">پرداخت پول</button>
+        </div>
+    </div>
+
+    <div class="card-body" style="font-size: 14px;">
+        <div class="row mb-4">
+            @php
+            $creditTotal = $ledgers->where('TransactionType', 'Credit')->sum('Amount');
+            $debitTotal = $ledgers->where('TransactionType', 'Debit')->sum('Amount');
+            $netTotal = $debitTotal - $creditTotal;
+            $runningBalance = 0;
+            @endphp
+
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <h5 class="text-center mb-3">صورت‌حساب مشتری</h5>
+                    <table class="table table-bordered table-striped text-center align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>شماره</th>
+                                <th>نام مشتری</th>
+                                <th>شماره تماس</th>
+                                <th>آدرس</th>
+                                <th>مبلغ قابل پرداخت</th>
+                                <th>تاریخ صدور</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ $customer->id }}</td>
+                                <td>{{ $customer->CustomerName }}</td>
+                                <td>{{ $customer->Phone }}</td>
+                                <td>{{ $customer->Address }}</td>
+                                <td>{{ $netTotal }} <span class="float-start">AFN</span></td>
+                                <td style="font-size: 14px;">{{ \Morilog\Jalali\Jalalian::now()->format('Y/m/d') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-responsive mt-4">
+                    <table class="table table-bordered table-sm table-hover text-center align-middle" style="font-size: 14px;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>آدی</th>
+                                <th>نوعیت معامله</th>
+                                <th>بل #</th>
+                                <th>تاریخ</th>
+                                <th>توضیحات</th>
+                                <th>آوردگی</th>
+                                <th>بردگی</th>
+                                <th>بیلانس</th>
+                                <th colspan="2" class="d-print-none" style="width:1%;">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                            $type = 'بردگی';
+                            $refType = 'بل';
+                            $color = 'text-dark';
+                            $i = 1;
+                            @endphp
+
+                            @forelse($ledgers as $ledger)
+                            @php
+                            $credit = $ledger->TransactionType === 'Credit' ? $ledger->Amount : 0;
+                            $debit = $ledger->TransactionType === 'Debit' ? $ledger->Amount : 0;
+                            $color = $ledger->TransactionType === 'Debit' ? 'text-danger' : 'text-dark';
+                            $runningBalance += $debit - $credit;
+                            $refType = $ledger->ReferenceType !== 'invoice' ? 'پول نقد' : 'بل';
+                            $type = $ledger->TransactionType === 'Credit' ? 'آوردگی' : 'بردگی';
+                            @endphp
+                            <tr>
+                                <td class="{{ $color }}">{{$i++ }}</td>
+                                <td class="{{ $color }}">{{ $type }}</td>
+                                <td class="{{ $color }}">{{ $ledger->ReferenceID }} - {{ $refType }}</td>
+                                <td class="{{ $color }}">
+                                    {{ $ledger->DateLedger}}
+                                </td>
+
+                                <td class="{{ $color }}">{{ $ledger->Description }}</td>
+                                <td class="{{ $color }}">{{ $credit }}</td>
+                                <td class="{{ $color }}">{{ $debit }}</td>
+                                <td>{{ $runningBalance }}</td>
+                                <td class="d-print-none">
+                                    <button class="btn btn-sm btn-outline-primary" @if($ledger->ReferenceType === 'invoice') disabled @endif >
+                                        <a href="#" class="edit-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editModal"
+                                            data-id="{{$ledger->id}}"
+                                            data-ledgerDate="{{$ledger->DateLedger}}"
+                                            data-referenceID="{{$ledger->ReferenceID }}"
+                                            data-referenceType="{{$ledger->ReferenceType}}"
+                                            data-transactionType="{{$ledger->TransactionType}}"
+                                            data-description="{{$ledger->Description}}"
+                                            data-amount="{{$ledger->Amount}}"
+
+                                            data-url="{{ route('customer.updateLedger', ['ledger' => $ledger->id]) }}">
+                                            <i class="fa fa-edit"></i>
+                                            edit
+                                        </a></button>
+                                </td>
+                                <td class="d-print-none"><button class="btn btn-sm btn-outline-danger" @if($ledger->ReferenceType === 'invoice') disabled @endif > <a href="#" class="delete-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal"
+                                            data-name="{{ $ledger->Amount }}"
+                                            data-url="{{ route('customer.deleteLedger', ['id' => $ledger->id]) }}">
+                                            <i class="fa fa-trash text-danger"></i>
+                                            delete
+                                        </a></button></td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="10">هیچ معاملات اجرا نشد</td>
+                            </tr>
+                            @endforelse
+
+                            <tr class="fw-bold">
+                                <td colspan="7" class="text-end">بردگی:</td>
+                                <td>{{ $debitTotal }}</td>
+                                <td colspan="2" class="d-print-none"></td>
+                            </tr>
+                            <tr class="fw-bold">
+                                <td colspan="7" class="text-end">آوردگی:</td>
+                                <td>{{ $creditTotal }}</td>
+                                <td colspan="2" class="d-print-none"></td>
+                            </tr>
+                            <tr class="fw-bold">
+                                <td colspan="7" class="text-end">بیلانس:</td>
+
+                                <td style="color: {{ $netTotal >= 0 ? 'green' : 'red' }}">
+                                    {{ $netTotal }} <span class="float-start">AFN</span>
+                                </td>
+                                <td colspan="2" class="d-print-none"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Payment -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">پرداخت جدید</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('customer.storeLedger') }}" method="post" novalidate>
+                    @csrf
+                    <input type="hidden" name="CustomerID" value="{{ $customer->id }}" />
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="LedgerDate" class="form-label">تاریخ</label>
+                            <input type="text" class="usage form-control" id="LedgerDate" name="LedgerDate" placeholder="a text box" style="margin-left:0px;" />
+                        </div>
+
+                        <div class="col-6">
+                            <label for="Amount" class="form-label">مبلغ</label>
+                            <input type="number" name="Amount" class="form-control" id="Amount" min="0">
+                        </div>
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="ReferenceID" class="form-label">بل نمبر</label>
+                            <input type="number" name="ReferenceID" class="form-control" id="ReferenceID" min="0" value="0">
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label">نوعیت پول</label>
+                            <div class="row">
+                                <div class="form-check col-6">
+                                    <input class="form-check-input" type="radio" name="ReferenceType" id="brought" value="payment_in" checked>
+                                    <label class="form-check-label" for="brought">آوردگی</label>
+                                </div>
+                                <div class="form-check col-6">
+                                    <input class="form-check-input" type="radio" name="ReferenceType" id="taken" value="payment_out">
+                                    <label class="form-check-label" for="taken">بردگی</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-9">
+                            <label for="Description" class="form-label">توضیحات</label>
+                            <textarea class="form-control" name="Description" id="Description" placeholder="آدرس یا توضیحات بیشتر"></textarea>
+                        </div>
+
+                        <div class="col-3">
+                            <br>
+                            <br>
+
+                            <button class="btn btn-success btn-sm" type="submit">ذخیره کردن</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="editModalLabel">ویرایش مشتری</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <input type="hidden" name="CustomerID" value="{{ $customer->id }}" />
+                    <input type="hidden" name="id" id="edit-id">
+
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="LedgerDate" class="form-label">تاریخ</label>
+                            <input type="text" class="usage form-control" id="edit-ledgerDate" name="LedgerDate" placeholder="a text box" style="margin-left:0px;" />
+                        </div>
+
+                        <div class="col-6">
+                            <label for="Amount" class="form-label">مبلغ</label>
+                            <input type="number" name="Amount" class="form-control" id="edit-amount" min="0">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="ReferenceID" class="form-label">بل نمبر</label>
+                            <input type="number" name="ReferenceID" class="form-control" id="edit-referenceID" min="0" value="0">
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label">نوعیت پول</label>
+                            <div class="row">
+                                <div class="form-check col-6">
+                                    <input class="form-check-input" type="radio" name="ReferenceType" id="edit-brought" value="payment_in">
+                                    <label class="form-check-label" for="edit-brought">آوردگی</label>
+                                </div>
+                                <div class="form-check col-6">
+                                    <input class="form-check-input" type="radio" name="ReferenceType" id="edit-taken" value="payment_out">
+                                    <label class="form-check-label" for="edit-taken">بردگی</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-9">
+                            <label for="Description" class="form-label">توضیحات</label>
+                            <textarea class="form-control" name="Description" id="edit-description" placeholder="آدرس یا توضیحات بیشتر"></textarea>
+                        </div>
+                        <div class="col-3">
+                            <br>
+                            <br>
+                            <button class="btn btn-primary btn-sm" type="submit">ذخیره تغییرات</button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const ledgerDate = this.getAttribute('data-ledgerDate');
+            const referenceID = this.getAttribute('data-referenceID');
+            const transactionType = this.getAttribute('data-transactionType'); // 'Credit' or 'Debit'
+            const description = this.getAttribute('data-description');
+            const amount = this.getAttribute('data-amount');
+            const url = this.getAttribute('data-url');
+
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-ledgerDate').value = ledgerDate;
+            document.getElementById('edit-referenceID').value = referenceID;
+            document.getElementById('edit-description').value = description;
+            document.getElementById('edit-amount').value = amount;
+            document.getElementById('editForm').action = url;
+
+            // ✅ Map transactionType to ReferenceType radio buttons
+            if (transactionType === 'Credit') {
+                document.getElementById('edit-brought').checked = true;
+            } else if (transactionType === 'Debit') {
+                document.getElementById('edit-taken').checked = true;
+            }
+        });
+    });
+</script>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="p-3 modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="deleteModalLabel">حذف مشتری</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3 text-center" id="delete-message">آیا مطمئن هستید؟</p>
+                <div class="gap-2 d-flex justify-content-center">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">خیر</button>
+                    <a class="btn btn-sm btn-danger" id="delete-confirm-link" href="#">بله</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const name = this.getAttribute('data-name');
+            const url = this.getAttribute('data-url');
+
+            document.getElementById('delete-message').textContent = `آیا مطمئن هستید که می‌خواهید ${name} را حذف کنید؟`;
+            document.getElementById('delete-confirm-link').href = url;
+        });
+    });
+</script>
+
+@endsection
+
+@section('scripts')
+<script src="{{ asset('assets/js/jquery-1.10.1.min.js') }}"></script>
+<script src="{{ asset('assets/js/persianDatepicker.js') }}"></script>
+
+<script>
+    $(function() {
+        $(".usage, .usage-edit").persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true
+        });
+    });
+</script>
+@endsection

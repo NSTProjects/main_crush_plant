@@ -1,0 +1,97 @@
+/* --- پایه --- */
+body { background-color: #f8f9fa; font-family: Tahoma, sans-serif; }
+
+/* --- سایدبار ثابت از md به بالا --- */
+.sidebar-md {
+  /* Ensure Bootstrap offcanvas uses this exact width */
+  --bs-offcanvas-width: 250px;
+}
+
+
+.navbar-nav .nav-item{
+	margin-left:2px;
+	padding-top:1px;
+	padding-bottom:1px;
+}
+
+
+
+@media (min-width: 768px) {
+  /* وقتی offcanvas به صورت ثابت (offcanvas-md) می‌شود، آن را به‌صورت ستون نشان بده */
+  .offcanvas-md {
+    position: static;
+    transform: none;
+    visibility: visible !important;
+    border: 0;
+  }
+  .content-area {
+    /* چون در RTL هستیم و start = راست است، محتوا باید با درنظر گرفتن عرض سایدبار فاصله بگیرد */
+    margin-right: var(--bs-offcanvas-width);
+  }
+}
+
+/* آیتم‌های منو */
+.sidebar .nav-link {
+  color: #212529;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+  background-color: #e9ecef;
+}
+
+/* آیکن‌ها فاصله مناسب */
+.sidebar .nav-link i {
+  margin-left: 8px;
+}
+
+
+/* سایدبار همیشه باید ارتفاع کامل صفحه را بگیرد */
+.offcanvas,
+.sidebar-md {
+  height: 100vh !important;
+}
+
+
+/* ✅ Full-height sidebar in all states (mobile offcanvas and desktop static) */
+.offcanvas, .offcanvas-md { 
+  height: 100vh;            /* force offcanvas container to full viewport height */
+}
+.offcanvas-body { 
+  height: 100%;
+  overflow-y: auto;         /* scroll inside sidebar if content exceeds height */
+}
+.sidebar { 
+  min-height: 100vh;        /* ensure sidebar fills viewport */
+  overflow-y: auto;
+}
+
+
+/* ===== Invoice (responsive) ===== */
+.items-table td, .items-table th { vertical-align: middle; }
+.items-table thead th { background:#f8f9fa; }
+
+@media (max-width: 576px) {
+  .table-responsive-stack table,
+  .table-responsive-stack thead,
+  .table-responsive-stack tbody,
+  .table-responsive-stack th,
+  .table-responsive-stack td,
+  .table-responsive-stack tr { display:block; width:100%; }
+  .table-responsive-stack thead { display:none; }
+  .table-responsive-stack tr {
+    border:1px solid #e9ecef; border-radius:8px; margin-bottom:10px; background:#fff;
+  }
+  .table-responsive-stack td {
+    border:none !important; display:flex; justify-content:space-between; gap:8px; padding:10px 12px;
+  }
+  .table-responsive-stack td::before {
+    content: attr(data-label);
+    font-weight:600; color:#6c757d;
+  }
+}
+
+@media print {
+  .print-hide { display:none !important; }
+}
