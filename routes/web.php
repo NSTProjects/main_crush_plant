@@ -12,8 +12,16 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CustomerLedgerController;
 use App\Http\Controllers\SyncController;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 Route::get('/', function () {
+    // User::create([
+    //     'name' => 'Admin User',
+    //     'email' => 'admin@gmail.com',
+    //     'password' => Hash::make('123456'),
+    //     'role' => 'admin',
+    // ]);
     return view('auth.login');
 });
 

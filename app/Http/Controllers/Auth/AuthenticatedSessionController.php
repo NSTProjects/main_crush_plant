@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 
@@ -18,6 +20,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@gmail.com',
+            'password' => Hash::make('123456'),
+            'role' => 'admin',
+        ]);
         return view('auth.login');
     }
 
@@ -29,18 +37,18 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
-// return redirect()->intended(RouteServiceProvider::HOME);
+        // return redirect()->intended(RouteServiceProvider::HOME);
 
 
-$user = Auth::user();
+        $user = Auth::user();
 
-if ($user->role === 'admin') {
-    // return redirect()->route('admin.dashboard');
-    return redirect()->route('dashboard');
-} else {
-    // return redirect()->route('user.dashboard');
-    return redirect()->route('dashboard');
-}
+        if ($user->role === 'admin') {
+            // return redirect()->route('admin.dashboard');
+            return redirect()->route('dashboard');
+        } else {
+            // return redirect()->route('user.dashboard');
+            return redirect()->route('dashboard');
+        }
         // return redirect()->intended(RouteServiceProvider::HOME);
 
         // return redirect()->intended(route('dashboard', absolute: false));

@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>پنل رسپانسیو با سایدبار (Overlay)</title>
+  <title> فتحیان (کرش پلنټ) </title>
+  <link rel="icon" type="image/x-icon" href="{{asset('assets/logo.png')}}">
   <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet"> -->
   <link href="{{ asset('assets/css/bootstrap.rtl.min.css') }}" rel="stylesheet">
   <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"> -->
@@ -43,7 +44,7 @@
       <!-- راست: لوگو/نام شرکت -->
       <a class="gap-2 navbar-brand d-flex align-items-center" href="{{route('dashboard')}}">
         <img src="{{ asset('assets/logo.png')}}" alt="لوگو" width="28" height="28" class="rounded-circle">
-        <span class="fw-bold">شرکت فتحیان</span>
+        <span class="fw-bold">فتحیان (کرش پلنټ) </span>
       </a>
 
 
