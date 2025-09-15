@@ -13,6 +13,9 @@ use App\Http\Controllers\BackupController;
 use App\Http\Controllers\CustomerLedgerController;
 use App\Http\Controllers\SyncController;
 use App\Models\User;
+// use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Container\Attributes\Log;
 use Illuminate\Support\Facades\Hash;
 
 Route::get('/', function () {
@@ -43,7 +46,14 @@ Route::resource('product', ProductController::class);
 Route::resource('delivery', DeliveryController::class);
 Route::resource('expense', ExpenseController::class);
 Route::resource('sales-invoice', SalesInvoiceController::class);
+
 Route::resource('sales-invoice-item', SalesInvoiceItemController::class);
+Route::post('sales-invoice-item/filter', [SalesInvoiceItemController::class, 'filter'])->name('seles-item.filter');
+
+// Route::post('test-ajax', function (Request $request) {
+//     return response()->json(['message' => 'AJAX working']);
+// });
+
 
 
 // it is used for destroy because I use a tag
