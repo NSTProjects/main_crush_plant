@@ -55,7 +55,8 @@
 
     <div class="print-btn">
         <button onclick="window.print()">چاپ فاکتور</button>
-        <a href="{{ route('sales-invoice.index') }}">برگشت</a>
+        <a href="#" onclick="window.location = document.referrer;">برگشت</a>
+
     </div>
 
     <div class="invoice-box">

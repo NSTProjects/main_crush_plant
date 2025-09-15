@@ -89,7 +89,10 @@ class UserController extends Controller
                 $transaction->JalaliDate = $transaction->TransactionDate; // fallback
             }
         }
+
+        $products = Product::where('IsDeleted', false)->get();
+        $customers = Customer::where('IsDeleted', false)->get();
         // return $transactions;
-        return view('journal', compact('transactions'));
+        return view('journal', compact('transactions', 'products', 'customers'));
     }
 }

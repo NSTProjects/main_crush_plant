@@ -23,7 +23,7 @@
                         <button type="submit" class="btn btn-primary">فیلتر</button>
                     </div>
                     <div class="col-md-3">
-                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        <button type="button " class="btn btn-success d-none" data-bs-toggle="modal" data-bs-target="#exampleModal">
                             بل جدید
                         </button>
                         <button type="button" class="btn btn-outline-dark  print-btn">
