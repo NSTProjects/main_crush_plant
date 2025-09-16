@@ -22,6 +22,7 @@ class CustomerLedger extends Model
         'Description',
         'TransactionType',
         'Amount',
+        'Currency',
         'ReferenceID',
         'ReferenceType',
         'SyncStatus',

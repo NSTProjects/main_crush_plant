@@ -23,6 +23,7 @@
             $debitTotal = $ledgers->where('TransactionType', 'Debit')->sum('Amount');
             $netTotal = $debitTotal - $creditTotal;
             $runningBalance = 0;
+
             @endphp
 
             <div class="col-md-12">
@@ -53,10 +54,35 @@
                 </div>
 
                 <div class="table-responsive mt-4">
+                    @php
+                    $creditTotal = $ledgers->where('TransactionType', 'Credit')->sum('Amount');
+                    $debitTotal = $ledgers->where('TransactionType', 'Debit')->sum('Amount');
+                    $netTotal = $debitTotal - $creditTotal;
+                    $runningBalance = 0;
+                    $i = 1;
+
+                    // Group totals by currency
+                    $currencyGroups = $ledgers->groupBy('Currency');
+                    $currencyTotals = [];
+
+                    foreach ($currencyGroups as $currency => $group) {
+                    $credit = $group->where('TransactionType', 'Credit')->sum('Amount');
+                    $debit = $group->where('TransactionType', 'Debit')->sum('Amount');
+                    $balance = $debit - $credit;
+
+                    $currencyTotals[] = [
+                    'currency' => $currency,
+                    'credit' => $credit,
+                    'debit' => $debit,
+                    'balance' => $balance,
+                    ];
+                    }
+                    @endphp
+
                     <table class="table table-bordered table-sm table-hover text-center align-middle" style="font-size: 14px;">
                         <thead class="table-light">
                             <tr>
-                                <th>آدی</th>
+                                <th>#</th>
                                 <th>نوعیت معامله</th>
                                 <th>بل #</th>
                                 <th>تاریخ</th>
@@ -64,34 +90,27 @@
                                 <th>آوردگی</th>
                                 <th>بردگی</th>
                                 <th>بیلانس</th>
-                                <th colspan="2" class="d-print-none" style="width:1%;">عملیات</th>
+                                <th>کرنسی</th>
+                                <th colspan="2" class="d-print-none">عملیات</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @php
-                            $type = 'بردگی';
-                            $refType = 'بل';
-                            $color = 'text-dark';
-                            $i = 1;
-                            @endphp
-
-                            @forelse($ledgers as $ledger)
+                            @forelse ($ledgers as $ledger)
                             @php
                             $credit = $ledger->TransactionType === 'Credit' ? $ledger->Amount : 0;
                             $debit = $ledger->TransactionType === 'Debit' ? $ledger->Amount : 0;
                             $color = $ledger->TransactionType === 'Debit' ? 'text-danger' : 'text-dark';
+                            if ($ledger->Currency === 'AFN') {
                             $runningBalance += $debit - $credit;
+                            }
                             $refType = $ledger->ReferenceType !== 'invoice' ? 'پول نقد' : 'بل';
                             $type = $ledger->TransactionType === 'Credit' ? 'آوردگی' : 'بردگی';
                             @endphp
                             <tr>
-                                <td class="{{ $color }}">{{$i++ }}</td>
+                                <td class="{{ $color }}">{{ $i++ }}</td>
                                 <td class="{{ $color }}">{{ $type }}</td>
                                 <td class="{{ $color }}">{{ $ledger->ReferenceID }} - {{ $refType }}</td>
-                                <td class="{{ $color }}">
-                                    {{ $ledger->DateLedger}}
-                                </td>
-
+                                <td class="{{ $color }}">{{ $ledger->DateLedger }}</td>
                                 <td class="{{ $color }}">
                                     {{ $ledger->Description }}
                                     @if ($ledger->ReferenceType === 'invoice' && $salesInvoiceItems->has($ledger->ReferenceID))
@@ -103,63 +122,74 @@
                                     @endforeach
                                     @endif
                                 </td>
-
                                 <td class="{{ $color }}">{{ $credit }}</td>
                                 <td class="{{ $color }}">{{ $debit }}</td>
                                 <td>{{ $runningBalance }}</td>
+                                <td>{{ $ledger->Currency }}</td>
                                 <td class="d-print-none">
-                                    <button class="btn btn-sm btn-outline-primary" @if($ledger->ReferenceType === 'invoice') disabled @endif >
+                                    <button class="btn btn-sm btn-outline-primary" @if($ledger->ReferenceType === 'invoice') disabled @endif>
                                         <a href="#" class="edit-btn"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editModal"
-                                            data-id="{{$ledger->id}}"
-                                            data-ledgerDate="{{$ledger->DateLedger}}"
-                                            data-referenceID="{{$ledger->ReferenceID }}"
-                                            data-referenceType="{{$ledger->ReferenceType}}"
-                                            data-transactionType="{{$ledger->TransactionType}}"
-                                            data-description="{{$ledger->Description}}"
-                                            data-amount="{{$ledger->Amount}}"
-
+                                            data-id="{{ $ledger->id }}"
+                                            data-ledgerDate="{{ $ledger->DateLedger }}"
+                                            data-referenceID="{{ $ledger->ReferenceID }}"
+                                            data-referenceType="{{ $ledger->ReferenceType }}"
+                                            data-transactionType="{{ $ledger->TransactionType }}"
+                                            data-description="{{ $ledger->Description }}"
+                                            data-amount="{{ $ledger->Amount }}"
+                                            data-currency="{{ $ledger->Currency }}"
                                             data-url="{{ route('customer.updateLedger', ['ledger' => $ledger->id]) }}">
-                                            <i class="fa fa-edit"></i>
-                                            edit
-                                        </a></button>
+                                            <i class="fa fa-edit"></i> edit
+                                        </a>
+                                    </button>
                                 </td>
-                                <td class="d-print-none"><button class="btn btn-sm btn-outline-danger" @if($ledger->ReferenceType === 'invoice') disabled @endif > <a href="#" class="delete-btn"
+                                <td class="d-print-none">
+                                    <button class="btn btn-sm btn-outline-danger" @if($ledger->ReferenceType === 'invoice') disabled @endif>
+                                        <a href="#" class="delete-btn"
                                             data-bs-toggle="modal"
                                             data-bs-target="#deleteModal"
                                             data-name="{{ $ledger->Amount }}"
                                             data-url="{{ route('customer.deleteLedger', ['id' => $ledger->id]) }}">
-                                            <i class="fa fa-trash text-danger"></i>
-                                            delete
-                                        </a></button></td>
+                                            <i class="fa fa-trash text-danger"></i> delete
+                                        </a>
+                                    </button>
+                                </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="10">هیچ معاملات اجرا نشد</td>
+                                <td colspan="11">هیچ معاملات اجرا نشد</td>
                             </tr>
                             @endforelse
 
+                            {{-- Totals grouped by currency --}}
+                            @foreach ($currencyTotals as $total)
                             <tr class="fw-bold">
-                                <td colspan="7" class="text-end">بردگی:</td>
-                                <td>{{ $debitTotal }}</td>
+                                <td colspan="7" class="text-end">بردگی ({{ $total['currency'] }}):</td>
+                                <td>{{ $total['debit'] }}</td>
+                                <td></td>
                                 <td colspan="2" class="d-print-none"></td>
                             </tr>
                             <tr class="fw-bold">
-                                <td colspan="7" class="text-end">آوردگی:</td>
-                                <td>{{ $creditTotal }}</td>
+                                <td colspan="7" class="text-end">آوردگی ({{ $total['currency'] }}):</td>
+                                <td>{{ $total['credit'] }}</td>
+                                <td></td>
                                 <td colspan="2" class="d-print-none"></td>
                             </tr>
                             <tr class="fw-bold">
-                                <td colspan="7" class="text-end">بیلانس:</td>
-
-                                <td style="color: {{ $netTotal >= 0 ? 'green' : 'red' }}">
-                                    {{ $netTotal }} <span class="float-start">AFN</span>
+                                <td colspan="7" class="text-end">بیلانس ({{ $total['currency'] }}):</td>
+                                <td style="color: {{ $total['balance'] >= 0 ? 'green' : 'red' }}">
+                                    {{ $total['balance'] >= 0 ? $total['balance'] : (-1*$total['balance'] ) }}
+                                </td>
+                                <td style="color: {{ $total['balance'] >= 0 ? 'green' : 'red' }}">
+                                    <span class="float-start">{{ $total['currency'] }}</span>
                                 </td>
                                 <td colspan="2" class="d-print-none"></td>
                             </tr>
+                            @endforeach
                         </tbody>
                     </table>
+
                 </div>
             </div>
         </div>
@@ -193,10 +223,19 @@
 
                     <div class="row">
                         <div class="col-6">
+                            <label for="Currency" class="form-label">کرنسی </label>
+                            <select name="Currency" class="form-control" id="Currency">
+                                <option value="AFN">AFN</option>
+                                <option value="USD">USD</option>
+                                <option value="KPR">KPR</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6">
                             <label for="ReferenceID" class="form-label">بل نمبر</label>
                             <input type="number" name="ReferenceID" class="form-control" id="ReferenceID" min="0" value="0">
                         </div>
-
+                        <div class="col-6"></div>
                         <div class="col-6">
                             <label class="form-label">نوعیت پول</label>
                             <div class="row">
@@ -262,10 +301,18 @@
                     </div>
                     <div class="row">
                         <div class="col-6">
+                            <label for="Currency" class="form-label">کرنسی </label>
+                            <select name="Currency" class="form-control" id="edit-currency">
+                                <option value="AFN">AFN</option>
+                                <option value="USD">USD</option>
+                                <option value="KPR">KPR</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
                             <label for="ReferenceID" class="form-label">بل نمبر</label>
                             <input type="number" name="ReferenceID" class="form-control" id="edit-referenceID" min="0" value="0">
                         </div>
-
+                        <div class="col-6"></div>
                         <div class="col-6">
                             <label class="form-label">نوعیت پول</label>
                             <div class="row">
@@ -309,15 +356,16 @@
             const transactionType = this.getAttribute('data-transactionType'); // 'Credit' or 'Debit'
             const description = this.getAttribute('data-description');
             const amount = this.getAttribute('data-amount');
+            const currency = this.getAttribute('data-currency');
             const url = this.getAttribute('data-url');
 
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-ledgerDate').value = ledgerDate;
             document.getElementById('edit-referenceID').value = referenceID;
             document.getElementById('edit-description').value = description;
+            document.getElementById('edit-currency').value = currency;
             document.getElementById('edit-amount').value = amount;
             document.getElementById('editForm').action = url;
-
             // ✅ Map transactionType to ReferenceType radio buttons
             if (transactionType === 'Credit') {
                 document.getElementById('edit-brought').checked = true;

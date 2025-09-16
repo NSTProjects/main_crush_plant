@@ -140,6 +140,7 @@ class CustomerController extends Controller
             'Description'    =>  $request->Description,
             'TransactionType'   => $tranType,
             'Amount'  => $request->Amount,
+            'Currency'  => $request->Currency,
             'ReferenceID'  => $request->ReferenceID,
             'ReferenceType'  => $request->ReferenceType,
             'SyncStatus'  => 'pending',
@@ -163,6 +164,7 @@ class CustomerController extends Controller
             'Description' => $request->input('Description'),
             'TransactionType' => $tranType,
             'Amount' => $request->input('Amount'),
+            'Currency' => $request->input('Currency'),
             'ReferenceType' => $request->input('ReferenceType'),
             'SyncStatus' => 'pending', // Optional: if you want to reset sync
         ]);
