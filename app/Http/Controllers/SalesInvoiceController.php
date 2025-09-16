@@ -156,22 +156,22 @@ class SalesInvoiceController extends Controller
             foreach ($mergedItems as $productId => $data) {
                 $product = Product::find($productId);
 
-                if (!$product) {
-                    DB::rollBack();
-                    return response()->json([
-                        'error' => "Product with ID {$productId} not found."
-                    ], 422);
-                }
+                // if (!$product) {
+                //     DB::rollBack();
+                //     return response()->json([
+                //         'error' => "Product with ID {$productId} not found."
+                //     ], 422);
+                // }
 
-                $deliveredVolume = Delivery::where('ProductID', $productId)->sum('TotalVolume');
-                $availableStock = floatval($product->OpenStock) + floatval($deliveredVolume);
+                // $deliveredVolume = Delivery::where('ProductID', $productId)->sum('TotalVolume');
+                // $availableStock = floatval($product->OpenStock) + floatval($deliveredVolume);
 
-                if ($availableStock < $data['Quantity']) {
-                    DB::rollBack();
-                    return response()->json([
-                        'error' => "Insufficient stock for '{$product->ProductName}'. Available: {$availableStock}, Requested: {$data['Quantity']}"
-                    ], 422);
-                }
+                // if ($availableStock < $data['Quantity']) {
+                //     DB::rollBack();
+                //     return response()->json([
+                //         'error' => "Insufficient stock for '{$product->ProductName}'. Available: {$availableStock}, Requested: {$data['Quantity']}"
+                //     ], 422);
+                // }
 
 
                 // Insert item into sales_invoice_items
@@ -284,22 +284,22 @@ class SalesInvoiceController extends Controller
             foreach ($mergedItems as $productId => $data) {
                 $product = Product::find($productId);
 
-                if (!$product) {
-                    DB::rollBack();
-                    return response()->json([
-                        'error' => "Product with ID {$productId} not found."
-                    ], 422);
-                }
+                // if (!$product) {
+                //     DB::rollBack();
+                //     return response()->json([
+                //         'error' => "Product with ID {$productId} not found."
+                //     ], 422);
+                // }
 
-                $deliveredVolume = Delivery::where('ProductID', $productId)->sum('TotalVolume');
-                $availableStock = floatval($product->OpenStock) + floatval($deliveredVolume);
+                // $deliveredVolume = Delivery::where('ProductID', $productId)->sum('TotalVolume');
+                // $availableStock = floatval($product->OpenStock) + floatval($deliveredVolume);
 
-                if ($availableStock < $data['Quantity']) {
-                    DB::rollBack();
-                    return response()->json([
-                        'error' => "Insufficient stock for '{$product->ProductName}'. Available: {$availableStock}, Requested: {$data['Quantity']}"
-                    ], 422);
-                }
+                // if ($availableStock < $data['Quantity']) {
+                //     DB::rollBack();
+                //     return response()->json([
+                //         'error' => "Insufficient stock for '{$product->ProductName}'. Available: {$availableStock}, Requested: {$data['Quantity']}"
+                //     ], 422);
+                // }
 
 
                 // Insert item into sales_invoice_items

@@ -29,18 +29,16 @@
                                 <th colspan="12" class="text-center">لیست اجناس موجود</th>
                             </tr>
                             <tr>
-                                <th rowspan="2">آدی</th>
+                                <th rowspan="2">#</th>
                                 <th rowspan="2">نام</th>
-                                <th colspan="4" class="text-center">مقادر M/3</th>
+                                <th colspan="2" class="text-center">مقادر M/3</th>
                                 <th rowspan="2">قیمت</th>
                                 <th rowspan="2">مجموعه</th>
                                 <th rowspan="2" class="d-print-none">Action</th>
                             </tr>
                             <tr>
-                                <th> اولیه</th>
-                                <th>آورده گی</th>
                                 <th> فروش</th>
-                                <th> موجود</th>
+                                <th> واحد</th>
 
                             </tr>
                         </thead>
@@ -51,18 +49,16 @@
                             @php
                             $deliveriesQty = $deliveries[$product->id] ?? 0;
                             $salesQty = $salesInvoiceItems[$product->id] ?? 0;
-                            $currentStock = $product->OpenStock + $deliveriesQty - $salesQty;
-                            $stockValue = $product->UnitPrice * $currentStock;
+
+                            $stockValue = $product->UnitPrice * $salesQty;
                             $temp += $stockValue;
                             @endphp
 
                             <tr>
                                 <td>{{ $product->id }}</td>
                                 <td>{{ $product->ProductName }}</td>
-                                <td>{{ $product->OpenStock }}</td>
-                                <td>{{ $deliveriesQty }}</td>
                                 <td>{{ $salesQty }}</td>
-                                <td>{{ $currentStock }} ({{ $product->Unit }})</td>
+                                <td> ({{ $product->Unit }})</td>
                                 <td>{{ $product->UnitPrice }}</td>
                                 <td>{{ number_format($stockValue, 0) }}</td>
                                 <td class="d-print-none">
@@ -89,7 +85,7 @@
                             @endforeach
 
                             <tr class="table-success">
-                                <th colspan="7" class="text-end">مجموعه کل ارزش موجودی:</th>
+                                <th colspan="5" class="text-end">مجموعه کل ارزش موجودی:</th>
                                 <th class="fw-bold">{{ number_format($temp, 0) }} <span style="float: left;"> AFN</span></th>
                                 <th class="d-print-none"></th>
                             </tr>
@@ -128,7 +124,7 @@
                         <input type="text" class="form-control" name="ProductName" id="recipient-name" placeholder="نام محصول">
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 d-none">
                         <label for="recipient-name" class="col-form-label">موجودی اولیه</label>
                         <input type="number" class="form-control" step="2" value="0" name="OpenStock" id="recipient-name" placeholder="موجودی اولیه">
                     </div>
@@ -171,7 +167,7 @@
                         <input type="text" class="form-control" name="ProductName" id="edit-name" placeholder="نام محصول">
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 d-none">
                         <label for="recipient-name" class="col-form-label">موجودی اولیه</label>
                         <input type="number" class="form-control" step="2" value="0" name="OpenStock" id="edit-openStock" placeholder="موجودی اولیه">
                     </div>

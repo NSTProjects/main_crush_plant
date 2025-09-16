@@ -105,7 +105,7 @@
             </a>
             <ul class="collapse ps-3" id="submenu1">
               <li><a class="nav-link" href="{{route('product.index')}}">اجناس</a></li>
-              <li><a class="nav-link" href="{{route('delivery.index')}}"> آوردگی</a></li>
+              <!-- <li><a class="nav-link " href="{{route('delivery.index')}}"> آوردگی</a></li> -->
 
             </ul>
           </li>

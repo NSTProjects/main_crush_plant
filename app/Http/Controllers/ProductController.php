@@ -21,10 +21,10 @@ class ProductController extends Controller
         $products = Product::where('IsDeleted', false)->get();
 
         // Get total delivered quantity per product
-        $deliveries = Delivery::where('IsDeleted', false)
-            ->select('ProductID', DB::raw('SUM(TotalVolume) as total_delivered'))
-            ->groupBy('ProductID')
-            ->pluck('total_delivered', 'ProductID');
+        // $deliveries = Delivery::where('IsDeleted', false)
+        //     ->select('ProductID', DB::raw('SUM(TotalVolume) as total_delivered'))
+        //     ->groupBy('ProductID')
+        //     ->pluck('total_delivered', 'ProductID');
         // returns [ProductID => total_delivered]
 
         $salesInvoiceItems = SalesInvoiceItem::where('IsDeleted', false)
@@ -33,7 +33,7 @@ class ProductController extends Controller
             ->pluck('total_sale', 'ProductID');
 
 
-        return view('product.index', compact('products', 'deliveries', 'salesInvoiceItems'))
+        return view('product.index', compact('products', 'salesInvoiceItems'))
             ->with('page', 'product');
 
 
@@ -62,7 +62,7 @@ class ProductController extends Controller
 
         $product = Product::create([
             'ProductName' => $request->input('ProductName'),
-            'OpenStock' => $request->input('OpenStock'),
+            'OpenStock' => 0,
             'Unit' => $request->input('Unit'),
             'UnitPrice' => $request->input('UnitPrice'),
             'SyncStatus' => 'pending',
@@ -99,7 +99,7 @@ class ProductController extends Controller
         // ✅ Update using Eloquent
         $product->update([
             'ProductName' => $request->input('ProductName'),
-            'OpenStock' => $request->input('OpenStock'),
+            'OpenStock' => 0,
             'Unit' => $request->input('Unit'),
             'UnitPrice' => $request->input('UnitPrice'),
             'SyncStatus' => 'pending',
