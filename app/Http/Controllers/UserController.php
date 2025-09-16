@@ -7,13 +7,94 @@ use App\Models\Expense;
 use App\Models\journal;
 use App\Models\Product;
 use App\Models\SalesInvoice;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Morilog\Jalali\Jalalian;
+
+
 
 class UserController extends Controller
 {
     //
+
+    public function index()
+    {
+        // $users = User::get();
+        // return $users;
+        // return view('user.index', compact('users'));
+        $user = Auth::user();
+
+        if ($user->role === 'admin') {
+            $users = User::all(); // Admin sees all users
+        } else {
+            $users = User::where('id', $user->id)->get(); // Regular user sees only themselves
+        }
+
+        return view('user.index', compact('users'));
+    }
+
+    public function store(Request $request)
+    {
+        // return $request->all();
+
+        User::create([
+            'name' => $request->input('name'),
+            'email' =>  $request->input('email'),
+            'password' => $request->input('password'),
+            'role' => $request->input('role'),
+        ]);
+
+        return redirect()->back()->with('success', 'محصول با موفقیت ثبت شد');
+    }
+
+
+
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($request->input('email') !== $user->email) {
+            $request->validate([
+                'email' => 'required|email|unique:users,email',
+            ]);
+            $user->email = $request->input('email');
+        }
+
+        $user->name = $request->input('name');
+        $user->role = $request->input('role');
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->input('password'));
+        }
+
+        $user->save();
+
+        return redirect()->back()->with('success', 'کاربر با موفقیت ویرایش شد');
+    }
+
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $user = User::findOrFail($id);
+
+        // Prevent the logged-in user from deleting themselves
+        if (Auth::id() === $user->id) {
+            return redirect()->back()->with('error', 'شما نمی‌توانید حساب خود را حذف کنید.');
+        }
+
+        $user->delete();
+
+        return redirect()->back()->with('success', 'کاربر با موفقیت حذف شد.');
+    }
+
+
 
     public function dashboard()
     {

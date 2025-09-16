@@ -26,6 +26,14 @@ Route::middleware(['auth'])->group(function () {
     // })->middleware(['auth', 'verified'])->name('dashboard');
     // routes/web.php
     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
+
+    Route::get('/user', [UserController::class, 'index'])->name('user');
+    Route::post('/user', [UserController::class, 'store'])->name('user.store');
+    Route::put('/user/{id}', [UserController::class, 'update'])->name('user.update');
+    Route::get('/user/{id}', [UserController::class, 'destroy'])->name('user.delete');
+
+
+
     // ✅ Profile routes
     // Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -60,7 +60,7 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
             <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> پروفایل</a></li>
-            <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> تنظیمات</a></li>
+            <li><a class="dropdown-item" href="{{route('user')}}"><i class="bi bi-gear"></i> تنظیمات</a></li>
             <li>
               <hr class="dropdown-divider">
             </li>

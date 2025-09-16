@@ -69,7 +69,7 @@ class ProductController extends Controller
             'IsDeleted' => false,
         ]);
 
-        Log::info('New product created:', $product->toArray());
+        // Log::info('New product created:', $product->toArray());
         return redirect()->route('product.index')->with('success', 'محصول با موفقیت ثبت شد');
     }
 
