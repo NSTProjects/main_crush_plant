@@ -92,7 +92,18 @@
                                     {{ $ledger->DateLedger}}
                                 </td>
 
-                                <td class="{{ $color }}">{{ $ledger->Description }}</td>
+                                <td class="{{ $color }}">
+                                    {{ $ledger->Description }}
+                                    @if ($ledger->ReferenceType === 'invoice' && $salesInvoiceItems->has($ledger->ReferenceID))
+                                    <br>
+                                    @foreach ($salesInvoiceItems[$ledger->ReferenceID] as $item)
+                                    <span class="badge bg-success text-light">
+                                        {{ $item->product->ProductName ?? 'محصول نامشخص' }}
+                                    </span>
+                                    @endforeach
+                                    @endif
+                                </td>
+
                                 <td class="{{ $color }}">{{ $credit }}</td>
                                 <td class="{{ $color }}">{{ $debit }}</td>
                                 <td>{{ $runningBalance }}</td>

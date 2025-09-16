@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\CustomerLedger;
+use App\Models\SalesInvoiceItem;
 use Illuminate\Http\Request;
 use Morilog\Jalali\Jalalian;
 
@@ -101,12 +102,29 @@ class CustomerController extends Controller
                 }
                 return $ledger;
             });
-        // return $ledgers;
+        // 🔍 Filter only invoice-type ledgers with valid ReferenceID
+        $invoiceLedgers = $ledgers->filter(function ($ledger) {
+            return $ledger->ReferenceType === 'invoice' && !is_null($ledger->ReferenceID);
+        });
+        // Step 1: Extract all ReferenceIDs from invoice-ledgers
+        $invoiceIds = $invoiceLedgers->pluck('ReferenceID')->unique()->toArray();
+
+        // Step 2: Get all SalesInvoiceItems that match those invoice IDs
+        $salesInvoiceItems = SalesInvoiceItem::with(['product'])
+            ->where('IsDeleted', false)
+            ->whereIn('InvoiceID', $invoiceIds)
+            ->get()
+            ->groupBy('InvoiceID'); // Step 3: Group items by InvoiceID
+
+        // 🔗 Load invoice and items for those filtered entries
+
+        // return $salesInvoiceItems;
         // Step 3: Return the view with both customer and ledgers
         return view('customer.ledger')
             ->with('page', 'customer')
             ->with('customer', $customer)
-            ->with('ledgers', $ledgers);
+            ->with('ledgers', $ledgers)
+            ->with('salesInvoiceItems', $salesInvoiceItems);
     }
 
     public function storeLedger(Request $request)
@@ -185,21 +203,6 @@ class CustomerController extends Controller
         ]);
 
         return redirect()->route('customer.index')->with('success', 'مشتری با موفقیت ثبت شد');
-    }
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
     }
 
     /**
