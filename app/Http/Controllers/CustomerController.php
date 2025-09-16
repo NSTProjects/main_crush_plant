@@ -127,6 +127,38 @@ class CustomerController extends Controller
             ->with('salesInvoiceItems', $salesInvoiceItems);
     }
 
+
+    public function filterLedger(Request $request, $id)
+    {
+        try {
+
+            $customer = Customer::findOrFail($id);
+            // return $customer;
+
+            $query = CustomerLedger::where('IsDeleted', false)
+                ->where('CustomerID', $customer->id);
+
+            // if ($request->filled('start_date') && $request->filled('end_date')) {
+            //     $startDate = Jalalian::fromFormat('Y-m-d', $request->start_date)->toCarbon();
+            //     $endDate = Jalalian::fromFormat('Y-m-d', $request->end_date)->toCarbon();
+            //     $query->whereBetween('LedgerDate', [$startDate, $endDate]);
+            // }
+            if ($request->filled('start_date') && $request->filled('end_date')) {
+                $startDate = Jalalian::fromFormat('Y-n-j', $request->start_date)->toCarbon();
+                $endDate = Jalalian::fromFormat('Y-n-j', $request->end_date)->toCarbon();
+                $query->whereBetween('LedgerDate', [$startDate, $endDate]);
+            }
+
+            $ledgers = $query->get()->transform(function ($ledger) {
+                $ledger->DateLedger = Jalalian::fromDateTime($ledger->LedgerDate)->format('Y-m-d');
+                return $ledger;
+            });
+
+            return response()->json(['ledgers' => $ledgers]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
     public function storeLedger(Request $request)
     {
         $shamsiDate = $request->LedgerDate;

@@ -10,6 +10,19 @@
 <div class="card shadow-sm mb-4">
     <div class="card-header d-flex justify-content-between align-items-center d-print-none">
         <h5 class="mb-0">صورت حساب مشتری</h5>
+        <form id="filterForm" class="row g-2">
+
+            <div class="col-md-3">
+                <input type="text" class="form-control usage1" name="start_date" placeholder="تاریخ شروع" readonly>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control usage1" name="end_date" placeholder="تاریخ پایان" readonly>
+            </div>
+            <div class="col-md-3">
+                <button type="button" id="filterBtn" class="btn btn-primary">فیلتر</button>
+
+            </div>
+        </form>
         <div>
             <button type="button" class="btn btn-secondary me-2" onclick="window.print()">پرینت</button>
             <button type="button" class="btn btn-primary" onclick="openPersianDatePicker()" data-bs-toggle="modal" data-bs-target="#exampleModal">پرداخت پول</button>
@@ -36,7 +49,6 @@
                                 <th>نام مشتری</th>
                                 <th>شماره تماس</th>
                                 <th>آدرس</th>
-                                <th>مبلغ قابل پرداخت</th>
                                 <th>تاریخ صدور</th>
                             </tr>
                         </thead>
@@ -46,7 +58,6 @@
                                 <td>{{ $customer->CustomerName }}</td>
                                 <td>{{ $customer->Phone }}</td>
                                 <td>{{ $customer->Address }}</td>
-                                <td>{{ $netTotal }} <span class="float-start">AFN</span></td>
                                 <td style="font-size: 14px;">{{ \Morilog\Jalali\Jalalian::now()->format('Y/m/d') }}</td>
                             </tr>
                         </tbody>
@@ -94,7 +105,7 @@
                                 <th colspan="2" class="d-print-none">عملیات</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="ledger-body">
                             @forelse ($ledgers as $ledger)
                             @php
                             $credit = $ledger->TransactionType === 'Credit' ? $ledger->Amount : 0;
@@ -418,6 +429,137 @@
         $(".usage, .usage-edit").persianDatepicker({
             format: 'YYYY/MM/DD',
             autoClose: true
+        });
+    });
+</script>
+
+
+
+<script src="{{asset('assets/js/jquery-3.6.0.min.js')}}"></script>
+
+<script>
+    $(document).ready(function() {
+        $('#filterBtn').on('click', function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                // url: "{{ route('customer-ledger.filter', ['id' => $customer->id]) }}",
+                url: "/customer-ledger/filter/1",
+
+                method: "POST",
+                data: $('#filterForm').serialize(),
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    const ledgers = response.ledgers;
+                    const itemsMap = response.salesInvoiceItems || {};
+                    let rows = '';
+                    let i = 1;
+                    let runningBalance = 0;
+
+                    const currencyGroups = {};
+                    ledgers.forEach(ledger => {
+                        const currency = ledger.Currency;
+                        if (!currencyGroups[currency]) {
+                            currencyGroups[currency] = [];
+                        }
+                        currencyGroups[currency].push(ledger);
+                    });
+
+                    ledgers.forEach(ledger => {
+                        const credit = ledger.TransactionType === 'Credit' ? ledger.Amount : 0;
+                        const debit = ledger.TransactionType === 'Debit' ? ledger.Amount : 0;
+                        const color = ledger.TransactionType === 'Debit' ? 'text-danger' : 'text-dark';
+                        const refType = ledger.ReferenceType !== 'invoice' ? 'پول نقد' : 'بل';
+                        const type = ledger.TransactionType === 'Credit' ? 'آوردگی' : 'بردگی';
+
+                        if (ledger.Currency === 'AFN') {
+                            runningBalance += debit - credit;
+                        }
+
+                        rows += `<tr>
+            <td class="${color}">${i++}</td>
+            <td class="${color}">${type}</td>
+            <td class="${color}">${ledger.ReferenceID} - ${refType}</td>
+            <td class="${color}">${ledger.DateLedger}</td>
+            <td class="${color}">
+                ${ledger.Description ?? ''}
+                ${ledger.ReferenceType === 'invoice' && itemsMap[ledger.ReferenceID] ? '<br>' + itemsMap[ledger.ReferenceID].map(item =>
+                    `<span class="badge bg-success text-light">${item.product?.ProductName ?? 'محصول نامشخص'}</span>`
+                ).join(' ') : ''}
+            </td>
+            <td class="${color}">${credit}</td>
+            <td class="${color}">${debit}</td>
+            <td>${runningBalance}</td>
+            <td>${ledger.Currency}</td>
+            <td class="d-print-none">
+                <button class="btn btn-sm btn-outline-primary" ${ledger.ReferenceType === 'invoice' ? 'disabled' : ''}>
+                    <a href="#" class="edit-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editModal"
+                        data-id="${ledger.id}"
+                        data-ledgerDate="${ledger.DateLedger}"
+                        data-referenceID="${ledger.ReferenceID}"
+                        data-referenceType="${ledger.ReferenceType}"
+                        data-transactionType="${ledger.TransactionType}"
+                        data-description="${ledger.Description}"
+                        data-amount="${ledger.Amount}"
+                        data-currency="${ledger.Currency}"
+                        data-url="/customer/update-ledger/${ledger.id}">
+                        <i class="fa fa-edit"></i> edit
+                    </a>
+                </button>
+            </td>
+            <td class="d-print-none">
+                <button class="btn btn-sm btn-outline-danger" ${ledger.ReferenceType === 'invoice' ? 'disabled' : ''}>
+                    <a href="#" class="delete-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteModal"
+                        data-name="${ledger.Amount}"
+                        data-url="/customer/delete-ledger/${ledger.id}">
+                        <i class="fa fa-trash text-danger"></i> delete
+                    </a>
+                </button>
+            </td>
+        </tr>`;
+                    });
+
+                    // Totals grouped by currency
+                    Object.entries(currencyGroups).forEach(([currency, group]) => {
+                        const credit = group.filter(l => l.TransactionType === 'Credit').reduce((sum, l) => sum + l.Amount, 0);
+                        const debit = group.filter(l => l.TransactionType === 'Debit').reduce((sum, l) => sum + l.Amount, 0);
+                        const balance = debit - credit;
+                        const balanceColor = balance >= 0 ? 'green' : 'red';
+
+                        rows += `
+        <tr class="fw-bold">
+            <td colspan="7" class="text-end">بردگی (${currency}):</td>
+            <td>${debit}</td>
+            <td></td>
+            <td colspan="2" class="d-print-none"></td>
+        </tr>
+        <tr class="fw-bold">
+            <td colspan="7" class="text-end">آوردگی (${currency}):</td>
+            <td>${credit}</td>
+            <td></td>
+            <td colspan="2" class="d-print-none"></td>
+        </tr>
+        <tr class="fw-bold">
+            <td colspan="7" class="text-end">بیلانس (${currency}):</td>
+            <td style="color: ${balanceColor}">${Math.abs(balance)}</td>
+            <td style="color: ${balanceColor}"><span class="float-start">${currency}</span></td>
+            <td colspan="2" class="d-print-none"></td>
+        </tr>`;
+                    });
+
+                    $('#ledger-body').html(rows);;
+                },
+                error: function(xhr, status, error) {
+                    console.error("❌ AJAX error:", xhr.responseText);
+                    alert("AJAX failed: " + xhr.status + " - " + error);
+                }
+            });
         });
     });
 </script>

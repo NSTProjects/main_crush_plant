@@ -65,6 +65,9 @@ Route::get('salesInvoice/delete/{id}', [SalesInvoiceController::class, 'destroy'
 Route::get('/sales-invoice/print/{id}', [SalesInvoiceController::class, 'print'])->name('sales-invoice.print');
 // It is commming 
 Route::get('customer-ledger/{id}', [CustomerController::class, 'showLedger'])->name('customer-ledger');
+Route::post('customer-ledger/filter/{id}', [CustomerController::class, 'filterLedger'])->name('customer-ledger.filter');
+
+// Route::post('customer-ledger/filter/{id}', [CustomerController::class, 'filterLedger'])->name('customer-ledger.filter');
 Route::post('/customer/storeLedger', [CustomerController::class, 'storeLedger'])->name('customer.storeLedger');
 Route::put('/customer/updateLedger/{ledger}', [CustomerController::class, 'updateLedger'])->name('customer.updateLedger');
 Route::get('customer/deleteLedger/{id}', [CustomerController::class, 'destroyLedger'])->name('customer.deleteLedger');
