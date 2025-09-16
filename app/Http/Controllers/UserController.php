@@ -37,30 +37,6 @@ class UserController extends Controller
 
     public function journal(Request $request)
     {
-        // $transactions = journal::orderBy('TransactionDate', 'desc')->get();
-        // // Convert each TransactionDate to Jalali
-        // foreach ($transactions as $transaction) {
-        //     $transaction->JalaliDate = Jalalian::fromDateTime($transaction->TransactionDate)->format('Y/m/d');
-        // }
-
-        // if ($request->filled('start_date') && $request->filled('end_date')) {
-        //     $startDate = Jalalian::fromFormat('Y-n-j', $request->input('start_date'))->toCarbon();
-        //     $endDate = Jalalian::fromFormat('Y-n-j', $request->input('end_date'))->toCarbon();
-        //     $query->whereBetween('TransactionDate', [$startDate, $endDate]);
-        // }
-        // // Otherwise, default to current month
-        // elseif (!$request->filled('filter_type')) {
-        //     $startOfMonth = Jalalian::now()->toCarbon()->startOfMonth()->format('Y-m-d');
-        //     $endOfMonth = Jalalian::now()->toCarbon()->endOfMonth()->format('Y-m-d');
-        //     $query->whereBetween('TransactionDate', [$startOfMonth, $endOfMonth]);
-        // }
-
-        // $expenses = $query->get()->transform(function ($expense) {
-        //     if ($expense->ExpenseDate) {
-        //         $expense->DateExpense = Jalalian::fromDateTime($expense->ExpenseDate)->format('Y-m-d');
-        //     }
-        //     return $expense;
-        // });
 
         // Start with base query
         $query = journal::query();
@@ -73,7 +49,7 @@ class UserController extends Controller
         }
         // Otherwise, show last 30 days
         else {
-            $thirtyDaysAgo = Carbon::now()->subDays(30)->format('Y-m-d');
+            $thirtyDaysAgo = Carbon::now()->format('Y-m-d');
             $today = Carbon::now()->format('Y-m-d');
             $query->whereBetween('TransactionDate', [$thirtyDaysAgo, $today]);
         }
@@ -90,8 +66,19 @@ class UserController extends Controller
             }
         }
 
-        $products = Product::where('IsDeleted', false)->get();
+        // 🔍 Filter only invoice-type ledgers with valid ReferenceID
+        // $customerTransactions = $transactions->filter(function ($transaction) {
+        //     return  !is_null($transaction->CustomerID);
+        // });
+        // // Step 1: Extract all ReferenceIDs from invoice-ledgers
+        // $customerResult = $customerTransactions->pluck('CustomerID')->unique()->toArray();
+        // // return $invoiceIds;
+
+
         $customers = Customer::where('IsDeleted', false)->get();
+
+        $products = Product::where('IsDeleted', false)->get();
+
         // return $transactions;
         return view('journal', compact('transactions', 'products', 'customers'));
     }

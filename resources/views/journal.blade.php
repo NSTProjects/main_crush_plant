@@ -50,6 +50,7 @@
                             <th rowspan="2" class="text-center"># </th>
                             <th rowspan="2" class="text-center">نوعیت معامله</th>
                             <th rowspan="2" class="text-center">مرجع</th>
+                            <th rowspan="2" class="text-center"> نام مشتری </th>
                             <th rowspan="2" class="text-center"> تاریخ </th>
                             <th rowspan="2" class="text-center">توضیحات</th>
                             <th colspan="2">معاملات نقد</th>
@@ -66,29 +67,31 @@
                         $i = 1;
                         @endphp
                         @foreach($transactions as $tx)
+                        @php
+                        $color = $tx->MoneyIn > 0 ? 'text-dark' : 'text-danger';
+                        $type = $tx->MoneyIn > 0 ? 'آوردگی' : 'بردگی';
+
+                        $sourceMap = [
+                        'sales_invoice' => 'بل فروش',
+                        'expense' => 'مصارف',
+                        'customer_ledger' => 'صورت حساب مشتری',
+                        ];
+                        $translatedSource = $sourceMap[$tx->SourceType] ?? $tx->SourceType;
+
+                        $customer = $customers->firstWhere('id', $tx->CustomerID);
+                        @endphp
                         <tr>
-                            <td>{{$i++}}</td>
-                            <td class="{{  $tx->MoneyIn >0  ? 'text-dark' : 'text-danger' }}">
-                                {{ $tx->MoneyIn >0  ? 'آوردگی ' : 'بردگی' }}
-                            </td>
-                            @php
-                            $sourceMap = [
-                            'sales_invoice' => 'بل فروش',
-                            'expense' => 'مصارف',
-                            'customer_ledger' => 'صورت حساب مشتری',
-                            ];
-
-                            $translatedSource = $sourceMap[$tx->SourceType] ?? $tx->SourceType;
-                            @endphp
-
-                            <td class="{{  $tx->MoneyIn >0  ? 'text-dark' : 'text-danger' }}"> {{ $translatedSource }}
-                            </td>
-                            <td class="{{  $tx->MoneyIn >0  ? 'text-dark' : 'text-danger' }}">{{ $tx->JalaliDate }}</td>
-                            <td class="{{  $tx->MoneyIn >0  ? 'text-dark' : 'text-danger' }}">{{ $tx->Description }}</td>
-                            <td class="{{  $tx->MoneyIn >0  ? 'text-dark' : 'text-danger' }}">{{ number_format($tx->MoneyIn, 0) }}</td>
-                            <td class="{{  $tx->MoneyIn >0  ? 'text-dark' : 'text-danger' }}">{{ number_format($tx->MoneyOut, 0) }}</td>
+                            <td>{{ $loop->iteration }}</td>
+                            <td class="{{ $color }}">{{ $type }}</td>
+                            <td class="{{ $color }}">{{ $translatedSource }}</td>
+                            <td class="{{ $color }}">{{ $customer->CustomerName ?? 'نامشخص' }}</td>
+                            <td class="{{ $color }}">{{ $tx->JalaliDate }}</td>
+                            <td class="{{ $color }}">{{ $tx->Description }}</td>
+                            <td class="{{ $color }}">{{ number_format($tx->MoneyIn, 0) }}</td>
+                            <td class="{{ $color }}">{{ number_format($tx->MoneyOut, 0) }}</td>
                         </tr>
                         @endforeach
+
                         <tr>
                             <th colspan="5" style="text-align: left;">مجموعه: </th>
                             <th> {{ $transactions->sum('MoneyIn') }}</th>
