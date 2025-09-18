@@ -17,24 +17,6 @@ class ExpenseController extends Controller
 
         $query = Expense::where('IsDeleted', false);
 
-        // اگر کاربر تاریخ خاصی انتخاب نکرده باشد، فقط فاکتورهای ماه جاری را نمایش بده
-        // if (!$request->filled('filter_type')) {
-        //     // تاریخ شروع ماه جاری
-        //     $startOfMonth = Jalalian::now()->toCarbon()->startOfMonth()->format('Y-m-d');
-
-        //     // تاریخ پایان ماه جاری
-        //     $endOfMonth = Jalalian::now()->toCarbon()->endOfMonth()->format('Y-m-d');
-        //     $query->whereBetween('ExpenseDate', [$startOfMonth, $endOfMonth]);
-        // }
-
-        // // اگر کاربر فیلتر خاصی انتخاب کرده باشد
-        // if ($request->filled('start_date') && $request->filled('end_date')) {
-
-        //     $startDate = Jalalian::fromFormat('Y-n-j', $request->input('start_date'))->toCarbon();
-        //     $endDate = Jalalian::fromFormat('Y-n-j', $request->input('end_date'))->toCarbon();
-
-        //     $query->whereBetween('ExpenseDate', [$startDate, $endDate]);
-        // }
         // First check if user provided a date range
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $startDate = Jalalian::fromFormat('Y-n-j', $request->input('start_date'))->toCarbon();
@@ -63,6 +45,44 @@ class ExpenseController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+
+
+
+
+    public function expensFilterAjax(Request $request)
+    {
+        $query = Expense::where('IsDeleted', false);
+
+        // Filter by expense category
+        if ($request->filled('expense_category')) {
+            $query->where('ExpenseType', 'like', '%' . $request->expense_category . '%');
+        }
+
+        // Filter by Persian date range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            try {
+                $startDate = Jalalian::fromFormat('Y-n-j', $request->start_date)->toCarbon();
+                $endDate = Jalalian::fromFormat('Y-n-j', $request->end_date)->toCarbon();
+                $query->whereBetween('ExpenseDate', [$startDate, $endDate]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Invalid date format'], 422);
+            }
+        }
+
+        // Fetch and format results
+        $expenses = $query->get()->transform(function ($expense) {
+            $expense->DateExpense = $expense->ExpenseDate
+                ? Jalalian::fromDateTime($expense->ExpenseDate)->format('Y-m-d')
+                : null;
+            return $expense;
+        });
+
+        return response()->json(['data' => $expenses]);
+    }
+
+
+
+
     public function create()
     {
         //

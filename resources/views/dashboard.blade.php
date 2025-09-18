@@ -63,5 +63,6 @@
         @csrf
         <button type="submit">Backup Database Now</button>
     </form>
+    <a href="{{asset('sync.php')}}" class="btn btn-primary"> Sync page</a>
 </div>
 @endsection

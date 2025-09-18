@@ -45,6 +45,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('product', ProductController::class);
     Route::resource('delivery', DeliveryController::class);
     Route::resource('expense', ExpenseController::class);
+    Route::post('/expense/filter/ajax', [ExpenseController::class, 'expensFilterAjax'])->name('expense.filter.ajax');
+
+
     Route::resource('sales-invoice', SalesInvoiceController::class);
 
     Route::resource('sales-invoice-item', SalesInvoiceItemController::class);

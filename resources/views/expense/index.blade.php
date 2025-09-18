@@ -8,31 +8,35 @@
         <dev class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h3>لیست مصارف </h3>
 
-            <form method="GET" action="{{ route('expense.index') }}" class="d-flex align-items-center flex-wrap gap-2">
-                <div class="row">
-                    <div class="col-md-3">
-                        <input type="text" class="form-control usage1" id="start_date" name="start_date" placeholder="تاریخ شروع" readonly>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control usage1" id="end_date" name="end_date" placeholder="تاریخ پایان" readonly>
-                    </div>
 
-                    <div class="col-md-6 d-flex   justify-content-between align-items-center gap-2 flex-wrap">
-                        <button type="submit" class="btn btn-outline-primary ">
-                            <i class="fa fa-filter me-1"></i> فیلتر
-                        </button>
+            <form id="filterForm" class="row ">
 
-                        <button type="button" class="btn btn-outline-success " data-bs-toggle="modal" data-bs-target="#exampleModal">
-                            <i class="fa fa-plus me-1"></i> مصارف جدید
-                        </button>
 
-                        <button type="button" class="btn btn-outline-dark  print-btn">
-                            <i class="fa fa-print me-1"></i> چاپ
-                        </button>
-                    </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control" name="expense_category" placeholder="نام کتگوری مصرف">
+                </div>
 
+                <div class="col-md-2">
+                    <input type="text" class="form-control usage1" name="start_date" placeholder="تاریخ شروع" readonly>
+                </div>
+
+                <div class="col-md-2">
+                    <input type="text" class="form-control usage1" name="end_date" placeholder="تاریخ پایان" readonly>
+                </div>
+
+                <div class="col-md-6 d-flex   justify-content-between align-items-center gap-2 flex-wrap">
+                    <button type="button" id="filterBtn" class="btn btn-primary">فیلتر</button>
+
+                    <button type="button" class="btn btn-outline-success " data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        <i class="fa fa-plus me-1"></i> مصارف جدید
+                    </button>
+
+                    <button type="button" class="btn btn-outline-dark  print-btn">
+                        <i class="fa fa-print me-1"></i> چاپ
+                    </button>
                 </div>
             </form>
+
         </dev>
 
     </div>
@@ -53,7 +57,7 @@
                             <th class="d-print-none">ععلکرد</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="expenseTableBody">
                         @foreach($expenses as $expense)
                         <tr>
                             <td>{{$expense->id}}</td>
@@ -146,6 +150,92 @@
     </div>
 </div>
 
+<script src="{{asset('assets/js/jquery-3.6.0.min.js')}}"></script>
+
+<script>
+    $(document).ready(function() {
+        $('#filterBtn').on('click', function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: "{{ route('expense.filter.ajax') }}", // ✅ Update to your expense route
+                method: "POST",
+                data: $('#filterForm').serialize(),
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    console.log("✅ Expense AJAX successful");
+                    console.log("📦 Response:", response);
+
+                    let rows = '';
+                    let totalAmount = 0;
+
+                    if (response.data.length === 0) {
+                        rows = `<tr><td colspan="6" class="text-center text-danger">هیچ نتیجه‌ای یافت نشد</td></tr>`;
+                    } else {
+                        response.data.forEach(expense => {
+                            const amountFormatted = parseFloat(expense.Amount).toLocaleString('en-US', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2
+                            });
+
+                            rows += `<tr>
+                <td>${expense.id}</td>
+                <td>${expense.DateExpense ?? 'N/A'}</td>
+                <td>${expense.ExpenseType ?? 'N/A'}</td>
+                <td>${expense.Description ?? 'N/A'}</td>
+                <td>${amountFormatted}</td>
+                <td class="d-print-none">
+                    <button class="btn btn-danger btn-sm delete-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteModal"
+                        data-name="${amountFormatted}"
+                        data-url="/expense/delete/${expense.id}">
+                        حذف
+                    </button>
+
+                    <button class="btn btn-info btn-sm edit-btn"
+                         data-bs-toggle="modal"
+                          data-bs-target="#editModal"
+                         data-id="${expense.id}"
+                           data-expensedate="${expense.DateExpense}"
+                          data-expensetype="${expense.ExpenseType}"
+                          data-amount="${amountFormatted}"
+                       data-description="${expense.Description}"
+                          data-url="/expense/update/${expense.id}">
+                          ویرایش
+                    </button>
+                </td>
+            </tr>`;
+
+                            totalAmount += parseFloat(expense.Amount);
+                        });
+
+                        const totalFormatted = totalAmount.toLocaleString('en-US', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                        });
+
+                        rows += `<tr>
+            <td colspan="4" class="text-end fw-bold">مجموعه:</td>
+            <td class="fw-bold">${totalFormatted} (AFN)</td>
+            <td class="d-print-none"></td>
+        </tr>`;
+                    }
+
+                    $('#expenseTableBody').html(rows);
+                },
+                error: function(xhr, status, error) {
+                    console.error("❌ Expense AJAX error:", xhr.responseText);
+                    alert("خطا در دریافت اطلاعات: " + xhr.status + " - " + error);
+                }
+            });
+        });
+    });
+</script>
+
+
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" dir="rtl">
@@ -187,16 +277,17 @@
         </div>
     </div>
 </div>
-
 <script>
-    document.querySelectorAll('.edit-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            const expenseDate = this.getAttribute('data-expenseDate');
-            const expenseType = this.getAttribute('data-expenseType');
-            const amount = this.getAttribute('data-amount');
-            const description = this.getAttribute('data-description');
-            const url = this.getAttribute('data-url');
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('edit-btn')) {
+            const button = e.target;
+
+            const id = button.getAttribute('data-id');
+            const expenseDate = button.getAttribute('data-expenseDate');
+            const expenseType = button.getAttribute('data-expenseType');
+            const amount = button.getAttribute('data-amount');
+            const description = button.getAttribute('data-description');
+            const url = button.getAttribute('data-url');
 
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-expenseDate').value = expenseDate;
@@ -204,13 +295,14 @@
             document.getElementById('edit-amount').value = amount;
             document.getElementById('edit-description').value = description;
             document.getElementById('editForm').action = url;
+
             $(".usage-edit").persianDatepicker({
                 // selectedBefore: !0
             });
-        });
-
+        }
     });
 </script>
+
 
 
 <!-- Delete Modal -->
@@ -233,15 +325,19 @@
 </div>
 
 <script>
-    document.querySelectorAll('.delete-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const name = this.getAttribute('data-name');
-            const url = this.getAttribute('data-url');
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('delete-btn')) {
+            const button = e.target;
+
+            const name = button.getAttribute('data-name');
+            const url = button.getAttribute('data-url');
 
             document.getElementById('delete-message').textContent = `آیا مطمئن هستید که می‌خواهید ${name} را حذف کنید؟`;
             document.getElementById('delete-confirm-link').href = url;
-        });
+        }
     });
 </script>
+
+
 
 @endsection
