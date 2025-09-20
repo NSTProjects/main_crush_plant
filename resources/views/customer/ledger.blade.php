@@ -35,7 +35,7 @@
             $creditTotal = $ledgers->where('TransactionType', 'Credit')->sum('Amount');
             $debitTotal = $ledgers->where('TransactionType', 'Debit')->sum('Amount');
             $netTotal = $debitTotal - $creditTotal;
-            $runningBalance = 0;
+            $runningBalances = ['AFN' => 0, 'USD' => 0, 'PKR' => 0]; // Add more currencies as needed
 
             @endphp
 
@@ -69,7 +69,6 @@
                     $creditTotal = $ledgers->where('TransactionType', 'Credit')->sum('Amount');
                     $debitTotal = $ledgers->where('TransactionType', 'Debit')->sum('Amount');
                     $netTotal = $debitTotal - $creditTotal;
-                    $runningBalance = 0;
                     $i = 1;
 
                     // Group totals by currency
@@ -102,7 +101,8 @@
                                 <th>بردگی</th>
                                 <th>بیلانس</th>
                                 <th>کرنسی</th>
-                                <th colspan="2" class="d-print-none">عملیات</th>
+                                <th class="d-print-none " style="width: 1%;">ویرایش</th>
+                                <th class="d-print-none" style="width: 1%;">حذف</th>
                             </tr>
                         </thead>
                         <tbody id="ledger-body">
@@ -111,9 +111,10 @@
                             $credit = $ledger->TransactionType === 'Credit' ? $ledger->Amount : 0;
                             $debit = $ledger->TransactionType === 'Debit' ? $ledger->Amount : 0;
                             $color = $ledger->TransactionType === 'Debit' ? 'text-danger' : 'text-dark';
-                            if ($ledger->Currency === 'AFN') {
-                            $runningBalance += $debit - $credit;
-                            }
+
+                            $currency = $ledger->Currency;
+                            $runningBalances[$currency] = ($runningBalances[$currency] ?? 0) + ($debit - $credit);
+
                             $refType = $ledger->ReferenceType !== 'invoice' ? 'پول نقد' : 'بل';
                             $type = $ledger->TransactionType === 'Credit' ? 'آوردگی' : 'بردگی';
                             @endphp
@@ -135,9 +136,10 @@
                                 </td>
                                 <td class="{{ $color }}">{{ $credit }}</td>
                                 <td class="{{ $color }}">{{ $debit }}</td>
-                                <td>{{ $runningBalance }}</td>
+                                <td>{{ $runningBalances[$ledger->Currency] }}</td>
+
                                 <td>{{ $ledger->Currency }}</td>
-                                <td class="d-print-none">
+                                <td class="d-print-none" style="width: 1%;">
                                     <button class="btn btn-sm btn-outline-primary" @if($ledger->ReferenceType === 'invoice') disabled @endif>
                                         <a href="#" class="edit-btn"
                                             data-bs-toggle="modal"
@@ -155,7 +157,7 @@
                                         </a>
                                     </button>
                                 </td>
-                                <td class="d-print-none">
+                                <td class="d-print-none" style="width: 1%;">
                                     <button class="btn btn-sm btn-outline-danger" @if($ledger->ReferenceType === 'invoice') disabled @endif>
                                         <a href="#" class="delete-btn"
                                             data-bs-toggle="modal"

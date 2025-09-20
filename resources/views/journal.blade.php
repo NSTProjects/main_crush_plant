@@ -25,6 +25,8 @@
                             بل جدید
                         </button>
 
+                        <button type="button" class="btn btn-primary" onclick="openPersianDatePicker()" data-bs-toggle="modal" data-bs-target="#exampleModal1">پرداخت پول</button>
+
                         <button type="button" class="btn btn-outline-dark  print-btn">
                             <i class="fa fa-print me-1"></i> چاپ
                         </button>
@@ -41,31 +43,32 @@
                 <table class="table table-bordered table-hover w-100">
                     <thead>
                         <tr>
-                            <th colspan="9" class="text-center">مرکز تجارتی فتحیان </th>
+                            <th colspan="9" class="text-center">مرکز تجارتی فتحیان</th>
                         </tr>
                         <tr>
                             <th colspan="9" class="text-center">روزنامچه</th>
                         </tr>
                         <tr>
-                            <th rowspan="2" class="text-center"># </th>
+                            <th rowspan="2" class="text-center">#</th>
                             <th rowspan="2" class="text-center">نوعیت معامله</th>
                             <th rowspan="2" class="text-center">مرجع</th>
-                            <th rowspan="2" class="text-center"> نام مشتری </th>
-                            <th rowspan="2" class="text-center"> تاریخ </th>
+                            <th rowspan="2" class="text-center">نام مشتری</th>
+                            <th rowspan="2" class="text-center">تاریخ</th>
                             <th rowspan="2" class="text-center">توضیحات</th>
-                            <th colspan="2">معاملات نقد</th>
+                            <th colspan="3">معاملات نقد</th>
                         </tr>
                         <tr>
-
                             <th>آوردگی</th>
                             <th>بردگی</th>
+                            <th>کرنسی</th>
                         </tr>
-
                     </thead>
                     <tbody>
                         @php
+                        $currencyGroups = $transactions->groupBy('Currency');
                         $i = 1;
                         @endphp
+
                         @foreach($transactions as $tx)
                         @php
                         $color = $tx->MoneyIn > 0 ? 'text-dark' : 'text-danger';
@@ -81,7 +84,7 @@
                         $customer = $customers->firstWhere('id', $tx->CustomerID);
                         @endphp
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $i++ }}</td>
                             <td class="{{ $color }}">{{ $type }}</td>
                             <td class="{{ $color }}">{{ $translatedSource }}</td>
                             <td class="{{ $color }}">{{ $customer->CustomerName ?? 'نامشخص' }}</td>
@@ -89,23 +92,34 @@
                             <td class="{{ $color }}">{{ $tx->Description }}</td>
                             <td class="{{ $color }}">{{ number_format($tx->MoneyIn, 0) }}</td>
                             <td class="{{ $color }}">{{ number_format($tx->MoneyOut, 0) }}</td>
+                            <td class="{{ $color }}">{{ $tx->Currency }}</td>
                         </tr>
                         @endforeach
 
-                        <tr>
-                            <th colspan="5" style="text-align: left;">مجموعه: </th>
-                            <th> {{ $transactions->sum('MoneyIn') }}</th>
-                            <th>{{ $transactions->sum('MoneyOut') }}</th>
+                        @foreach($currencyGroups as $currency => $group)
+                        @php
+                        $totalIn = $group->sum('MoneyIn');
+                        $totalOut = $group->sum('MoneyOut');
+                        $balance = $totalIn - $totalOut;
+                        @endphp
+                        <tr class="table-secondary fw-bold">
+                            <th colspan="6" style="text-align: left;">مجموعه ({{ $currency }}):</th>
+                            <th>{{ number_format($totalIn, 0) }}</th>
+                            <th>{{ number_format($totalOut, 0) }}</th>
+                            <th>{{ $currency }}</th>
                         </tr>
-                        <tr>
-                            <th colspan="5" style="text-align: left;">باقی مانده: </th>
-                            <th colspan="2" class="text-info"> {{ $transactions->sum('MoneyIn') - $transactions->sum('MoneyOut') }} (AFN)</th>
+                        <tr class="table-secondary fw-bold">
+                            <th colspan="6" style="text-align: left;">باقی مانده ({{ $currency }}):</th>
+                            <th colspan="2" class="text-info">{{ number_format($balance, 0) }}</th>
+                            <th class="text-info">{{ $currency }}</th>
                         </tr>
+                        @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
 </div>
 
 <script>
@@ -333,5 +347,89 @@
         }
     });
 </script>
+
+<!-- Modal for Payment -->
+<div class="modal fade" id="exampleModal1" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">پرداخت جدید</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('customer.storeLedger') }}" method="post" novalidate>
+                    @csrf
+                    <input type="hidden" name="CustomerID" value="{{ $customer->id }}" />
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <label for="customer">نام مشتری</label>
+                            <select name="CustomerID" class="form-control" required>
+                                @foreach($customers as $customer)
+                                <option value="{{ $customer->id }}">{{ $customer->CustomerName }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="LedgerDate" class="form-label">تاریخ</label>
+                            <input type="text" class="usage form-control" id="LedgerDate" name="LedgerDate" placeholder="a text box" style="margin-left:0px;" />
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="Amount" class="form-label">مبلغ</label>
+                            <input type="number" name="Amount" class="form-control" id="Amount" min="0">
+                        </div>
+                        <div class="col-6">
+                            <label for="Currency" class="form-label">کرنسی </label>
+                            <select name="Currency" class="form-control" id="Currency">
+                                <option value="AFN">AFN</option>
+                                <option value="USD">USD</option>
+                                <option value="KPR">KPR</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6">
+                            <label for="ReferenceID" class="form-label">بل نمبر</label>
+                            <input type="number" name="ReferenceID" class="form-control" id="ReferenceID" min="0" value="0">
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label">نوعیت پول</label>
+                            <div class="row">
+                                <div class="form-check col-6">
+                                    <input class="form-check-input" type="radio" name="ReferenceType" id="brought" value="payment_in" checked>
+                                    <label class="form-check-label" for="brought">آوردگی</label>
+                                </div>
+                                <div class="form-check col-6">
+                                    <input class="form-check-input" type="radio" name="ReferenceType" id="taken" value="payment_out">
+                                    <label class="form-check-label" for="taken">بردگی</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-9">
+                            <label for="Description" class="form-label">توضیحات</label>
+                            <textarea class="form-control" name="Description" id="Description" placeholder="آدرس یا توضیحات بیشتر"></textarea>
+                        </div>
+
+                        <div class="col-3">
+                            <br>
+                            <br>
+
+                            <button class="btn btn-success btn-sm" type="submit">ذخیره کردن</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection

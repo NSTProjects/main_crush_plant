@@ -147,14 +147,6 @@ class UserController extends Controller
             }
         }
 
-        // 🔍 Filter only invoice-type ledgers with valid ReferenceID
-        // $customerTransactions = $transactions->filter(function ($transaction) {
-        //     return  !is_null($transaction->CustomerID);
-        // });
-        // // Step 1: Extract all ReferenceIDs from invoice-ledgers
-        // $customerResult = $customerTransactions->pluck('CustomerID')->unique()->toArray();
-        // // return $invoiceIds;
-
 
         $customers = Customer::where('IsDeleted', false)->get();
 

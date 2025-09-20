@@ -34,26 +34,43 @@ class CustomerController extends Controller
                 ->where('CustomerID', $customer->id)
                 ->get();
 
-            $totalDebit = $ledgers->where('TransactionType', 'Debit')->sum('Amount');
-            $totalCredit = $ledgers->where('TransactionType', 'Credit')->sum('Amount');
-            $netTotal = $totalCredit - $totalDebit;
+            // Group ledgers by currency
+            $currencyGroups = $ledgers->groupBy('Currency');
+
+            $currencyTotals = [];
+
+            foreach ($currencyGroups as $currency => $group) {
+                $totalDebit = $group->where('TransactionType', 'Debit')->sum('Amount');
+                $totalCredit = $group->where('TransactionType', 'Credit')->sum('Amount');
+                $netTotal = $totalCredit - $totalDebit;
+
+                // Only include if net is negative (customer owes money)
+                if ($netTotal < 0) {
+                    $currencyTotals[] = [
+                        'currency' => $currency,
+                        'total_debit' => $totalDebit,
+                        'total_credit' => $totalCredit,
+                        'net_total' => $netTotal,
+                    ];
+                }
+            }
 
             return [
                 'customer' => $customer,
-                'total_debit' => $totalDebit,
-                'total_credit' => $totalCredit,
-                'net_total' => $netTotal,
+                'currency_totals' => $currencyTotals,
             ];
         })->filter(function ($entry) {
-            return $entry['net_total'] < 0;
+            return count($entry['currency_totals']) > 0;
         });
-
 
         // return $customerDebits;
         return view('customer.debit')
             ->with('page', 'customer')
             ->with('customerDebits', $customerDebits);
     }
+
+
+
     public function showCredit()
     {
         $customers = Customer::where('IsDeleted', false)->get();
@@ -63,26 +80,37 @@ class CustomerController extends Controller
                 ->where('CustomerID', $customer->id)
                 ->get();
 
-            $totalDebit = $ledgers->where('TransactionType', 'Debit')->sum('Amount');
-            $totalCredit = $ledgers->where('TransactionType', 'Credit')->sum('Amount');
-            $netTotal = $totalCredit - $totalDebit;
+            $currencyGroups = $ledgers->groupBy('Currency');
+            $currencyTotals = [];
+
+            foreach ($currencyGroups as $currency => $group) {
+                $totalDebit = $group->where('TransactionType', 'Debit')->sum('Amount');
+                $totalCredit = $group->where('TransactionType', 'Credit')->sum('Amount');
+                $netTotal = $totalCredit - $totalDebit;
+
+                if ($netTotal > 0) {
+                    $currencyTotals[] = [
+                        'currency' => $currency,
+                        'total_debit' => $totalDebit,
+                        'total_credit' => $totalCredit,
+                        'net_total' => $netTotal,
+                    ];
+                }
+            }
 
             return [
                 'customer' => $customer,
-                'total_debit' => $totalDebit,
-                'total_credit' => $totalCredit,
-                'net_total' => $netTotal,
+                'currency_totals' => $currencyTotals,
             ];
         })->filter(function ($entry) {
-            return $entry['net_total'] > 0;
+            return count($entry['currency_totals']) > 0;
         });
 
-
-        // return $customerCredits;
         return view('customer.credit')
             ->with('page', 'customer')
             ->with('customerCredits', $customerCredits);
     }
+
 
     /**
      * Show the form for Show Leader.
@@ -161,6 +189,7 @@ class CustomerController extends Controller
     }
     public function storeLedger(Request $request)
     {
+        // return $request;
         $shamsiDate = $request->LedgerDate;
         $miladiDate = Jalalian::fromFormat('Y-n-j', $shamsiDate)->toCarbon();
 
